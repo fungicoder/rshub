@@ -1,33 +1,25 @@
 <?php
 
-/*
-Plugin Name: Sendex
-Plugin URI: https://localhost:4444/
-Description: A wordpress plugin for sending bulk SMS using Twilio
-Version:  1.0.0
-Author: Your name here
-*/
-
-require_once( plugin_dir_path( __FILE__ ) .'/twilio-lib/twilio-php-main/src/Twilio/autoload.php');
+require_once(plugin_dir_path(__FILE__) . 'includes/twilio-lib/twilio-php-main/src/Twilio/autoload.php');
 use Twilio\Rest\Client;
 
-class Sendex
+class Rshub
 {
-    public $pluginName = "sendex";
+    public $pluginName = "rshub";
 
-    public function displaySendexSettingsPage()
+    public function displayRshubSettingsPage()
     {
-        include_once "sendex-admin-settings-page.php";
+        include_once "admin/rshub-admin-settings-page.php";
     }
 
-    public function addSendexAdminOption()
+    public function addRshubAdminOption()
     {
         add_options_page(
-            "SENDEX SMS PAGE",
-            "SENDEX",
+            "RoofingSidingHub SMS PAGE",
+            "RoofingSidingHub",
             "manage_options",
             $this->pluginName,
-            [$this, "displaySendexSettingsPage"]
+            [$this, "displayRshubSettingsPage"]
         );
     }
 
@@ -46,7 +38,7 @@ class Sendex
      * Registers and Defines the necessary fields we need.
      *  @since    1.0.0
      */
-    public function sendexAdminSettingsSave()
+    public function rshubAdminSettingsSave()
     {
         register_setting(
             $this->pluginName,
@@ -54,24 +46,24 @@ class Sendex
             [$this, "pluginOptionsValidate"]
         );
         add_settings_section(
-            "sendex_main",
+            "rshub_main",
             "Main Settings",
-            [$this, "sendexSectionText"],
-            "sendex-settings-page"
+            [$this, "rshubSectionText"],
+            "rshub-settings-page"
         );
         add_settings_field(
             "api_sid",
             "API SID",
-            [$this, "sendexSettingSid"],
-            "sendex-settings-page",
-            "sendex_main"
+            [$this, "rshubSettingSid"],
+            "rshub-settings-page",
+            "rshub_main"
         );
         add_settings_field(
             "api_auth_token",
             "API AUTH TOKEN",
-            [$this, "sendexSettingToken"],
-            "sendex-settings-page",
-            "sendex_main"
+            [$this, "rshubSettingToken"],
+            "rshub-settings-page",
+            "rshub_main"
         );
     }
 
@@ -79,7 +71,7 @@ class Sendex
      * Displays the settings sub header
      *  @since    1.0.0
      */
-    public function sendexSectionText()
+    public function rshubSectionText()
     {
         echo '<h3 style="text-decoration: underline;">Edit api details</h3>';
     }
@@ -88,7 +80,7 @@ class Sendex
      * Renders the sid input field
      *  @since    1.0.0
      */
-    public function sendexSettingSid()
+    public function rshubSettingSid()
     {
         $options = get_option($this->pluginName);
         echo "
@@ -107,7 +99,7 @@ class Sendex
      * Renders the auth_token input field
      *
      */
-    public function sendexSettingToken()
+    public function rshubSettingToken()
     {
         $options = get_option($this->pluginName);
         echo "
@@ -126,16 +118,20 @@ class Sendex
      * Register the sms page for the admin area.
      *  @since    1.0.0
      */
-    public function registerSendexSmsPage()
+    public function registerRshubSmsPage()
     {
         // Create our settings page as a submenu page.
         add_submenu_page(
-            "tools.php", // parent slug
-            __("SENDEX SMS PAGE", $this->pluginName . "-sms"), // page title
-            __("SENDEX SMS", $this->pluginName . "-sms"), // menu title
+            "tools.php",
+            // parent slug
+            __("RooingSidingHub SMS PAGE", $this->pluginName . "-sms"),
+            // page title
+            __("RooingSidingHub SMS", $this->pluginName . "-sms"),
+            // menu title
             "manage_options", // capability
-            $this->pluginName . "-sms", // menu_slug
-            [$this, "displaySendexSmsPage"] // callable function
+            $this->pluginName . "-sms",
+            // menu_slug
+            [$this, "displayRshubSmsPage"] // callable function
         );
     }
 
@@ -143,9 +139,9 @@ class Sendex
      * Display the sms page - The page we are going to be sending message from.
      *  @since    1.0.0
      */
-    public function displaySendexSmsPage()
+    public function displayRshubSmsPage()
     {
-        include_once "sendex-admin-sms-page.php";
+        include_once "admin/rshub-admin-sms-page.php";
     }
 
     public function send_message()
@@ -154,9 +150,9 @@ class Sendex
             return;
         }
 
-        $to        = (isset($_POST["numbers"])) ? $_POST["numbers"] : "";
-        $sender_id = (isset($_POST["sender"]))  ? $_POST["sender"]  : "";
-        $message   = (isset($_POST["message"])) ? $_POST["message"] : "";
+        $to = (isset($_POST["numbers"])) ? $_POST["numbers"] : "";
+        $sender_id = (isset($_POST["sender"])) ? $_POST["sender"] : "";
+        $message = (isset($_POST["message"])) ? $_POST["message"] : "";
 
         //gets our api details from the database.
         $api_details = get_option($this->pluginName);
@@ -190,11 +186,12 @@ class Sendex
      * @var $message - String - The message we are displaying
      * @var $status   - Boolean - its either true or false
      */
-    public static function adminNotice($message, $status = true) {
-        $class =  ($status) ? "notice notice-success" : "notice notice-error";
-        $message = __( $message, "sample-text-domain" );
+    public static function adminNotice($message, $status = true)
+    {
+        $class = ($status) ? "notice notice-success" : "notice notice-error";
+        $message = __($message, "sample-text-domain");
 
-        printf( '<div class="%1$s"><p>%2$s</p></div>', esc_attr( $class ), esc_html( $message ) ); 
+        printf('<div class="%1$s"><p>%2$s</p></div>', esc_attr($class), esc_html($message));
     }
 
     /**
@@ -203,8 +200,9 @@ class Sendex
      * @since    1.0.0
      * @access   private
      */
-    public static function DisplayError($message = "Aww!, there was an error.") {
-        add_action( 'admin_notices', function() use($message) {
+    public static function DisplayError($message = "Aww!, there was an error.")
+    {
+        add_action('admin_notices', function () use ($message) {
             self::adminNotice($message, false);
         });
     }
@@ -215,24 +213,25 @@ class Sendex
      * @since    1.0.0
      * @access   private
      */
-    public static function DisplaySuccess($message = "Successful!") {
-        add_action( 'admin_notices', function() use($message) {
+    public static function DisplaySuccess($message = "Successful!")
+    {
+        add_action('admin_notices', function () use ($message) {
             self::adminNotice($message, true);
         });
     }
 }
 
-// Create a new sendex instance
-$sendexInstance = new Sendex();
+// Create a new rshub instance
+$rshubInstance = new Rshub();
 
 // Add setting menu item
-add_action("admin_menu", [$sendexInstance , "addSendexAdminOption"]);
+add_action("admin_menu", [$rshubInstance, "addRshubAdminOption"]);
 
 // Saves and update settings
-add_action("admin_init", [$sendexInstance , 'sendexAdminSettingsSave']);
+add_action("admin_init", [$rshubInstance, 'rshubAdminSettingsSave']);
 
 // Hook our sms page
-add_action("admin_menu", [$sendexInstance , "registerSendexSmsPage"]);
+add_action("admin_menu", [$rshubInstance, "registerRshubSmsPage"]);
 
 // calls sending function whenever we try sending messages.
-add_action( 'admin_init', [$sendexInstance , "send_message"] );
+add_action('admin_init', [$rshubInstance, "send_message"]);
