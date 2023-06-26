@@ -1,11 +1,26 @@
 <?php
 
-require_once(plugin_dir_path(__FILE__) . 'includes/twilio-lib/twilio-php-main/src/Twilio/autoload.php');
+require_once(plugin_dir_path(__FILE__) . 'twilio-lib/twilio-php-main/src/Twilio/autoload.php');
 use Twilio\Rest\Client;
 
 class Rshub
 {
+
     public $pluginName = "rshub";
+
+    private $RSHUB_VERSION;
+
+    public function __construct() {
+        $this->RSHUB_VERSION = '0.0.1';
+    }
+
+    public function run() {
+        // acciones y filtros
+    }
+
+    public function get_version() {
+        return $this->version;
+    }
 
     public function displayRshubSettingsPage()
     {
@@ -36,7 +51,7 @@ class Rshub
 
     /**
      * Registers and Defines the necessary fields we need.
-     *  @since    1.0.0
+     *  @since    0.0.1
      */
     public function rshubAdminSettingsSave()
     {
@@ -78,7 +93,7 @@ class Rshub
 
     /**
      * Renders the sid input field
-     *  @since    1.0.0
+     *  @since    0.0.1
      */
     public function rshubSettingSid()
     {
@@ -219,6 +234,7 @@ class Rshub
             self::adminNotice($message, true);
         });
     }
+
 }
 
 // Create a new rshub instance
