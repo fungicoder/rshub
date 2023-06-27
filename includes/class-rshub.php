@@ -1,6 +1,7 @@
 <?php
 
 require_once(plugin_dir_path(__FILE__) . 'twilio-lib/twilio-php-main/src/Twilio/autoload.php');
+
 use Twilio\Rest\Client;
 
 class Rshub
@@ -10,21 +11,24 @@ class Rshub
 
     private $RSHUB_VERSION;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->RSHUB_VERSION = '0.0.1';
     }
 
-    public function run() {
+    public function run()
+    {
         // acciones y filtros
     }
 
-    public function get_version() {
+    public function get_version()
+    {
         return $this->version;
     }
 
     public function displayRshubSettingsPage()
     {
-        include_once "admin/rshub-admin-settings-page.php";
+        include_once plugin_dir_path(__FILE__) . "../admin/rshub-admin-settings-page.php";
     }
 
     public function addRshubAdminOption()
@@ -51,7 +55,6 @@ class Rshub
 
     /**
      * Registers and Defines the necessary fields we need.
-     *  @since    0.0.1
      */
     public function rshubAdminSettingsSave()
     {
@@ -84,7 +87,6 @@ class Rshub
 
     /**
      * Displays the settings sub header
-     *  @since    1.0.0
      */
     public function rshubSectionText()
     {
@@ -93,21 +95,25 @@ class Rshub
 
     /**
      * Renders the sid input field
-     *  @since    0.0.1
      */
     public function rshubSettingSid()
     {
         $options = get_option($this->pluginName);
+        if ($options === false || !isset($options['api_sid'])) {
+            $api_sid = '';
+        } else {
+            $api_sid = $options['api_sid'];
+        }
         echo "
-            <input
-                id='$this->pluginName[api_sid]'
-                name='$this->pluginName[api_sid]'
-                size='40'
-                type='text'
-                value='{$options['api_sid']}'
-                placeholder='Enter your API SID here'
-            />
-        ";
+        <input
+            id='{$this->pluginName}[api_sid]'
+            name='{$this->pluginName}[api_sid]'
+            size='40'
+            type='text'
+            value='{$api_sid}'
+            placeholder='Enter your API SID here'
+        />
+            ";
     }
 
     /**
@@ -117,21 +123,25 @@ class Rshub
     public function rshubSettingToken()
     {
         $options = get_option($this->pluginName);
+        if ($options === false || !isset($options['api_auth_token'])) {
+            $api_auth_token = '';
+        } else {
+            $api_auth_token = $options['api_auth_token'];
+        }
         echo "
-            <input
-                id='$this->pluginName[api_auth_token]'
-                name='$this->pluginName[api_auth_token]'
-                size='40'
-                type='text'
-                value='{$options['api_auth_token']}'
-                placeholder='Enter your API AUTH TOKEN here'
-            />
-        ";
+        <input
+            id='{$this->pluginName}[api_auth_token]'
+            name='{$this->pluginName}[api_auth_token]'
+            size='40'
+            type='text'
+            value='{$api_auth_token}'
+            placeholder='Enter your API AUTH TOKEN here'
+        />
+    ";
     }
 
     /**
      * Register the sms page for the admin area.
-     *  @since    1.0.0
      */
     public function registerRshubSmsPage()
     {
@@ -152,11 +162,11 @@ class Rshub
 
     /**
      * Display the sms page - The page we are going to be sending message from.
-     *  @since    1.0.0
+     * @since    1.0.0
      */
     public function displayRshubSmsPage()
     {
-        include_once "admin/rshub-admin-sms-page.php";
+        include_once plugin_dir_path(__FILE__) ."../admin/rshub-admin-sms-page.php";
     }
 
     public function send_message()
@@ -199,7 +209,7 @@ class Rshub
      * @since    1.0.0
      * @access   private
      * @var $message - String - The message we are displaying
-     * @var $status   - Boolean - its either true or false
+     * @var $status - Boolean - its either true or false
      */
     public static function adminNotice($message, $status = true)
     {
