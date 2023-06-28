@@ -9,7 +9,7 @@ class Rshub
 
     public $pluginName = "rshub";
 
-    private $RSHUB_VERSION;
+    private string $RSHUB_VERSION;
 
     public function __construct()
     {
@@ -19,11 +19,33 @@ class Rshub
     public function run()
     {
         // acciones y filtros
+        // Create a new rshub instance
+        $rshubInstance = new Rshub();
+
+        // Add setting menu item
+        add_action("admin_menu", [$rshubInstance, "addRshubAdminOption"]);
+
+        // Saves and update settings
+        add_action("admin_init", [$rshubInstance, 'rshubAdminSettingsSave']);
+
+        // Hook our sms page
+        add_action("admin_menu", [$rshubInstance, "registerRshubSmsPage"]);
+
+        // calls sending function whenever we try sending messages.
+        add_action('admin_init', [$rshubInstance, "send_message"]);
+
+        $this->register_shortcodes();
+
+        add_action('admin_post_rshub_search', 'rshub_handle_search');
+
+        add_action('admin_post_nopriv_rshub_search', 'rshub_handle_search');
+
+        add_action('admin_menu', [$rshubInstance, "rshub_search_results"]);
     }
 
     public function get_version()
     {
-        return $this->version;
+        return $this->RSHUB_VERSION;
     }
 
     public function displayRshubSettingsPage()
@@ -158,6 +180,8 @@ class Rshub
             // menu_slug
             [$this, "displayRshubSmsPage"] // callable function
         );
+
+
     }
 
     /**
@@ -166,7 +190,7 @@ class Rshub
      */
     public function displayRshubSmsPage()
     {
-        include_once plugin_dir_path(__FILE__) ."../admin/rshub-admin-sms-page.php";
+        include_once plugin_dir_path(__FILE__) . "../admin/rshub-admin-sms-page.php";
     }
 
     public function send_message()
@@ -206,7 +230,7 @@ class Rshub
     /**
      * Designs for displaying Notices
      *
-     * @since    1.0.0
+     * @since    0.0.1
      * @access   private
      * @var $message - String - The message we are displaying
      * @var $status - Boolean - its either true or false
@@ -222,7 +246,7 @@ class Rshub
     /**
      * Displays Error Notices
      *
-     * @since    1.0.0
+     * @since    0.0.1
      * @access   private
      */
     public static function DisplayError($message = "Aww!, there was an error.")
@@ -235,7 +259,7 @@ class Rshub
     /**
      * Displays Success Notices
      *
-     * @since    1.0.0
+     * @since    0.0.1
      * @access   private
      */
     public static function DisplaySuccess($message = "Successful!")
@@ -245,19 +269,86 @@ class Rshub
         });
     }
 
+    /**
+     * Register the shortcode for the search form
+     */
+    public function register_shortcodes()
+    {
+        add_shortcode('rshub_search_form', [$this, 'rshub_search_form']);
+        add_shortcode('rshub_search_results', 'rshub_search_results');
+    }
+
+    /**
+     * Renders the search form
+     */
+    public function rshub_search_form()
+    {
+        ob_start();
+        ?>
+        <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post">
+            <input type="hidden" name="action" value="rshub_search">.
+            <input type="search" id="rshub-search" name="rshub-search" placeholder="Contractors...">
+            <input type="submit" value="Search">
+        </form>
+        <?php
+        return ob_get_clean();
+    }
+
+    /**
+     * Handles the search form submission
+     */
+    function rshub_handle_search()
+    {
+        // Captura la consulta de búsqueda
+        $search_query = sanitize_text_field($_POST['rshub-search']);
+
+        // Realiza la solicitud a la API de Google Places y decodifica la respuesta
+        $api_url = "https://maps.googleapis.com/maps/api/place/textsearch/json?query={$search_query}&key=YOUR_API_KEY";
+        $response = wp_remote_get($api_url);
+        $body = wp_remote_retrieve_body($response);
+        $data = json_decode($body, true);
+
+        // Guarda los datos de la API en la base de datos de WordPress
+        update_option('rshub_last_search', $data);
+
+        // Redirige al usuario a una página de resultados de búsqueda
+        wp_redirect(home_url("/search-results"));
+        exit;
+    }
+
+    /**
+     * Muestra los resultados de la búsqueda
+     */
+    function rshub_search_results()
+    {
+        // Recupera los datos de la última búsqueda
+        $data = get_option('rshub_last_search');
+
+        // Asegurarse de que los resultados de la búsqueda son un array
+        if (!is_array($data)) {
+            echo 'No search results found.';
+            return;
+        }
+
+        // Mostrar los resultados de la búsqueda
+        echo '<table>';
+        echo '<tr><th>Name</th><th>Address</th><th>Phone Number</th></tr>';
+        foreach ($data as $data_item) {
+            echo '<tr>';
+            echo '<td>' . esc_html($data_item['name']) . '</td>';
+            echo '<td>' . esc_html($data_item['address']) . '</td>';
+            echo '<td>' . esc_html($data_item['phone_number']) . '</td>';
+            echo '</tr>';
+        }
+        echo '</table>';
+    }
+
+
+
+
 }
 
-// Create a new rshub instance
-$rshubInstance = new Rshub();
 
-// Add setting menu item
-add_action("admin_menu", [$rshubInstance, "addRshubAdminOption"]);
 
-// Saves and update settings
-add_action("admin_init", [$rshubInstance, 'rshubAdminSettingsSave']);
 
-// Hook our sms page
-add_action("admin_menu", [$rshubInstance, "registerRshubSmsPage"]);
 
-// calls sending function whenever we try sending messages.
-add_action('admin_init', [$rshubInstance, "send_message"]);
