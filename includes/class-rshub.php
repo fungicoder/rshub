@@ -6,41 +6,45 @@ use Twilio\Rest\Client;
 
 class Rshub
 {
+    /**
+     * The loader that's responsible for maintaining and registering all hooks that power
+     * the plugin.
+     * @var      Plugin_Name_Loader $loader Maintains and registers all hooks for the plugin.
+     */
+    protected $loader;
 
-    public $pluginName = "rshub";
+    public $pluginName;
 
     private string $RSHUB_VERSION;
 
     public function __construct()
     {
-        $this->RSHUB_VERSION = '0.0.1';
+        if (defined('RSHUB_VERSION')) {
+            $this->RSHUB_VERSION = RSHUB_VERSION;
+        } else {
+            $this->RSHUB_VERSION = '0.0.1';
+        }
+
+        $this->pluginName = "rshub";
+        $this->load_dependencies();
+        $this->define_admin_hooks();
+        $this->define_public_hooks();
     }
 
-    public function run()
-    {
-        // acciones y filtros
-        // Create a new rshub instance
-        $rshubInstance = new Rshub();
+    private function load_dependencies(){
 
-        // Add setting menu item
-        add_action("admin_menu", [$rshubInstance, "addRshubAdminOption"]);
+        require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-plugin-name-loader.php';
 
-        // Saves and update settings
-        add_action("admin_init", [$rshubInstance, 'rshubAdminSettingsSave']);
 
-        // Hook our sms page
-        add_action("admin_menu", [$rshubInstance, "registerRshubSmsPage"]);
 
-        // calls sending function whenever we try sending messages.
-        add_action('admin_init', [$rshubInstance, "send_message"]);
+    }
 
-        $this->register_shortcodes();
+    private function define_admin_hooks(){
 
-        add_action('admin_post_rshub_search', 'rshub_handle_search');
+    }
 
-        add_action('admin_post_nopriv_rshub_search', 'rshub_handle_search');
+    private function define_public_hooks(){
 
-        add_action('admin_menu', [$rshubInstance, "rshub_search_results"]);
     }
 
     public function get_version()
@@ -48,19 +52,143 @@ class Rshub
         return $this->RSHUB_VERSION;
     }
 
+
+    // Run acciones y filtros
+    public function run()
+    {
+
+        // Create a new rshub instance
+        $rshubInstance = new Rshub();
+
+        // Saves and update settings
+        add_action("admin_init", [$rshubInstance, 'rshubTwilioSettingsSave']);
+
+        add_action("admin_init", [$rshubInstance, 'results_settings_df']);
+
+        // calls sending function whenever we try sending messages.
+        add_action('admin_init', [$rshubInstance, "send_message"]);
+
+
+        $this->register_shortcodes();
+
+        add_action('admin_post_rshub_search', [$this, 'rshub_handle_search']);
+
+        add_action('admin_post_nopriv_rshub_search', [$this, 'rshub_handle_search']);
+
+        // Add setting menu item
+        add_action('admin_menu', [$rshubInstance, 'rshub_settings_page']);
+    }
+
+
+    function rshub_settings_page()
+    {
+        add_menu_page(
+            'RoofingSidingHub.com',
+            'RsHub',
+            'manage_options',
+            'rshub-main',
+            [$this, 'displayRshubSettingsPage'],
+            'dashicons-wordpress-alt',
+            100
+        );
+
+        // Create our settings page as a submenu page.
+        add_submenu_page(
+            "rshub-main",
+            // parent slug
+            __("RooingSidingHub SMS PAGE", $this->pluginName . "-sms"),
+            // page title
+            __("RooingSidingHub SMS", $this->pluginName . "-sms"),
+            // menu title
+            "manage_options", // capability
+            $this->pluginName . "-sms",
+            // menu_slug
+            [$this, "displayRshubSmsPage"] // callable function
+        );
+
+        add_submenu_page(
+            "rshub-main",
+            // parent slug
+            __("RooingSidingHub Google Api", $this->pluginName . "-google"),
+            // page title
+            __("RooingSidingHub Google Api Config", $this->pluginName . "-google"),
+            // menu title
+            "manage_options", // capability
+            $this->pluginName . "-google",
+            // menu_slug
+            [$this, "displayRshubGoogleApiConfig"] // callable function
+        );
+
+        add_submenu_page(
+            "rshub-main",
+            // parent slug
+            __("RooingSidingHub Search Results", $this->pluginName . "-search"),
+            // page title
+            __("RooingSidingHub Search Results", $this->pluginName . "-search"),
+            // menu title
+            "manage_options", // capability
+            $this->pluginName . "-search",
+            // menu_slug
+            [$this, "displayRshubSearchResultsAdminPage"] // callable function
+        );
+
+    }
+
+    /**
+     * Display the settings for this plugin.
+     */
+    public function displayRshubSmsPage()
+    {
+        include_once plugin_dir_path(__FILE__) . "../admin/rshub-admin-sms-page.php";
+    }
+
+    function displayRshubSearchResultsAdminPage()
+    {
+        include_once plugin_dir_path(__FILE__) . "../admin/rshub-admin-search-results-page.php";
+    }
+
+    function displayRshubGoogleApiConfig()
+    {
+        include_once plugin_dir_path(__FILE__) . "../admin/rshub-admin-google-api-page.php";
+    }
+
+
     public function displayRshubSettingsPage()
     {
         include_once plugin_dir_path(__FILE__) . "../admin/rshub-admin-settings-page.php";
     }
 
-    public function addRshubAdminOption()
+    /**
+     * This secction refers to the sms page
+     * Registers and Defines the necessary fields we need.
+     */
+    public function rshubTwilioSettingsSave()
     {
-        add_options_page(
-            "RoofingSidingHub SMS PAGE",
-            "RoofingSidingHub",
-            "manage_options",
+
+        register_setting(
             $this->pluginName,
-            [$this, "displayRshubSettingsPage"]
+            $this->pluginName,
+            [$this, "rshubTwilioOptionsValidate"]
+        );
+        add_settings_section(
+            "rshub_main",
+            "Main Settings",
+            [$this, "rshubTwilioConfigSectionText"],
+            "rshub-settings-page"
+        );
+        add_settings_field(
+            "api_sid",
+            "API SID",
+            [$this, "rshubSettingTwilioSid"],
+            "rshub-settings-page",
+            "rshub_main"
+        );
+        add_settings_field(
+            "api_auth_token",
+            "API AUTH TOKEN",
+            [$this, "rshubSettingTwilioToken"],
+            "rshub-settings-page",
+            "rshub_main"
         );
     }
 
@@ -68,7 +196,7 @@ class Rshub
      * Sanitises all input fields.
      *
      */
-    public function pluginOptionsValidate($input)
+    public function rshubTwilioOptionsValidate($input)
     {
         $newinput["api_sid"] = trim($input["api_sid"]);
         $newinput["api_auth_token"] = trim($input["api_auth_token"]);
@@ -76,49 +204,17 @@ class Rshub
     }
 
     /**
-     * Registers and Defines the necessary fields we need.
+     * Displays the settings sub title header
      */
-    public function rshubAdminSettingsSave()
+    public function rshubTwilioConfigSectionText()
     {
-        register_setting(
-            $this->pluginName,
-            $this->pluginName,
-            [$this, "pluginOptionsValidate"]
-        );
-        add_settings_section(
-            "rshub_main",
-            "Main Settings",
-            [$this, "rshubSectionText"],
-            "rshub-settings-page"
-        );
-        add_settings_field(
-            "api_sid",
-            "API SID",
-            [$this, "rshubSettingSid"],
-            "rshub-settings-page",
-            "rshub_main"
-        );
-        add_settings_field(
-            "api_auth_token",
-            "API AUTH TOKEN",
-            [$this, "rshubSettingToken"],
-            "rshub-settings-page",
-            "rshub_main"
-        );
-    }
-
-    /**
-     * Displays the settings sub header
-     */
-    public function rshubSectionText()
-    {
-        echo '<h3 style="text-decoration: underline;">Edit api details</h3>';
+        echo '<h4 style="text-decoration: underline;">Edit Twilio Api details</h4>';
     }
 
     /**
      * Renders the sid input field
      */
-    public function rshubSettingSid()
+    public function rshubSettingTwilioSid()
     {
         $options = get_option($this->pluginName);
         if ($options === false || !isset($options['api_sid'])) {
@@ -142,7 +238,7 @@ class Rshub
      * Renders the auth_token input field
      *
      */
-    public function rshubSettingToken()
+    public function rshubSettingTwilioToken()
     {
         $options = get_option($this->pluginName);
         if ($options === false || !isset($options['api_auth_token'])) {
@@ -160,37 +256,6 @@ class Rshub
             placeholder='Enter your API AUTH TOKEN here'
         />
     ";
-    }
-
-    /**
-     * Register the sms page for the admin area.
-     */
-    public function registerRshubSmsPage()
-    {
-        // Create our settings page as a submenu page.
-        add_submenu_page(
-            "tools.php",
-            // parent slug
-            __("RooingSidingHub SMS PAGE", $this->pluginName . "-sms"),
-            // page title
-            __("RooingSidingHub SMS", $this->pluginName . "-sms"),
-            // menu title
-            "manage_options", // capability
-            $this->pluginName . "-sms",
-            // menu_slug
-            [$this, "displayRshubSmsPage"] // callable function
-        );
-
-
-    }
-
-    /**
-     * Display the sms page - The page we are going to be sending message from.
-     * @since    1.0.0
-     */
-    public function displayRshubSmsPage()
-    {
-        include_once plugin_dir_path(__FILE__) . "../admin/rshub-admin-sms-page.php";
     }
 
     public function send_message()
@@ -230,8 +295,6 @@ class Rshub
     /**
      * Designs for displaying Notices
      *
-     * @since    0.0.1
-     * @access   private
      * @var $message - String - The message we are displaying
      * @var $status - Boolean - its either true or false
      */
@@ -245,9 +308,6 @@ class Rshub
 
     /**
      * Displays Error Notices
-     *
-     * @since    0.0.1
-     * @access   private
      */
     public static function DisplayError($message = "Aww!, there was an error.")
     {
@@ -258,9 +318,6 @@ class Rshub
 
     /**
      * Displays Success Notices
-     *
-     * @since    0.0.1
-     * @access   private
      */
     public static function DisplaySuccess($message = "Successful!")
     {
@@ -270,12 +327,15 @@ class Rshub
     }
 
     /**
+     *
+     * This section refers to the search form and search results
+     *
      * Register the shortcode for the search form
      */
     public function register_shortcodes()
     {
         add_shortcode('rshub_search_form', [$this, 'rshub_search_form']);
-        add_shortcode('rshub_search_results', 'rshub_search_results');
+        add_shortcode('rshub_public_search_results', [$this, 'rshub_search_results_admin_page']);
     }
 
     /**
@@ -286,8 +346,8 @@ class Rshub
         ob_start();
         ?>
         <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post">
-            <input type="hidden" name="action" value="rshub_search">.
-            <input type="search" id="rshub-search" name="rshub-search" placeholder="Contractors...">
+            <input type="hidden" name="action" value="rshub-search">.
+            <input type="search" id="rshub-search-id" name="rshub-search" placeholder="Contractors...">
             <input type="submit" value="Search">
         </form>
         <?php
@@ -300,10 +360,10 @@ class Rshub
     function rshub_handle_search()
     {
         // Captura la consulta de búsqueda
-        $search_query = sanitize_text_field($_POST['rshub-search']);
+        $search_query = sanitize_text_field($_POST['rshub-search-id']);
 
         // Realiza la solicitud a la API de Google Places y decodifica la respuesta
-        $api_url = "https://maps.googleapis.com/maps/api/place/textsearch/json?query={$search_query}&key=YOUR_API_KEY";
+        $api_url = "https://maps.googleapis.com/maps/api/place/textsearch/json?query={$search_query}&key=AIzaSyAJMb51OqkPRd8WHDv7y4m5cN8c99cCItI";
         $response = wp_remote_get($api_url);
         $body = wp_remote_retrieve_body($response);
         $data = json_decode($body, true);
@@ -312,38 +372,65 @@ class Rshub
         update_option('rshub_last_search', $data);
 
         // Redirige al usuario a una página de resultados de búsqueda
-        wp_redirect(home_url("/search-results"));
+        wp_redirect(home_url("/public-search-results"));
         exit;
     }
 
     /**
      * Muestra los resultados de la búsqueda
      */
-    function rshub_search_results()
+    function rshub_search_results_admin_page()
     {
-        // Recupera los datos de la última búsqueda
+        // Obtiene los datos de la última búsqueda
         $data = get_option('rshub_last_search');
 
-        // Asegurarse de que los resultados de la búsqueda son un array
-        if (!is_array($data)) {
-            echo 'No search results found.';
-            return;
+        // Si no hay datos, muestra un mensaje de error
+        if (!$data) {
+            return "No hay resultados";
         }
 
-        // Mostrar los resultados de la búsqueda
-        echo '<table>';
-        echo '<tr><th>Name</th><th>Address</th><th>Phone Number</th></tr>';
-        foreach ($data as $data_item) {
-            echo '<tr>';
-            echo '<td>' . esc_html($data_item['name']) . '</td>';
-            echo '<td>' . esc_html($data_item['address']) . '</td>';
-            echo '<td>' . esc_html($data_item['phone_number']) . '</td>';
-            echo '</tr>';
-        }
-        echo '</table>';
+        // Si hay datos, los muestra
+        ob_start();
+        ?>
+        <h1>Resultados de la búsqueda</h1>
+        <ul>
+            <?php foreach ($data['results'] as $result) : ?>
+                <li>
+                    <h2><?php echo $result['name']; ?></h2>
+                    <p><?php echo $result['formatted_address']; ?></p>
+                </li>
+            <?php endforeach; ?>
+        </ul>
+        <?php
+        return ob_get_clean();
+
     }
 
 
+    public function rshubSearchResultsAdminSectionText()
+    {
+        echo '<p>Latest searches</p>';
+    }
+
+    public function results_settings_df()
+    {
+        register_setting(
+            $this->pluginName,
+            $this->pluginName
+        );
+        add_settings_section(
+            "rshub_search_results_section",
+            "Searches Admin View",
+            [$this, "rshubSearchResultsAdminSectionText"],
+            "rshub-serach-results-page"
+        );
+        add_settings_field(
+            "latest_searches",
+            "Latest Searches",
+            [$this, ""],
+            "rshub-serach-results-page"
+        );
+    }
 
 
 }

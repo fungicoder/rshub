@@ -24,6 +24,9 @@ if ( ! defined( 'WPINC' ) ) {
  */
 define( 'RSHUB_VERSION', '0.0.1' );
 
+
+
+
 function activate_rshub() {
 	require_once plugin_dir_path(__FILE__) . 'includes/class-rshub-activator.php';
 	Rshub_Activator::activate();
@@ -54,4 +57,5 @@ function run_rshub() {
 	$plugin->run();
 
 }
+
 run_rshub();
