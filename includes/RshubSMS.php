@@ -1,4 +1,7 @@
 <?php
+
+
+
 class RshubSMS
 {
     private $pluginName;
@@ -7,6 +10,8 @@ class RshubSMS
     {
         $this->pluginName = $pluginName;
     }
+
+
 
     public function send_message()
     {
@@ -80,10 +85,10 @@ class RshubSMS
     /**
      * Display the settings for this plugin.
      */
-    public function displayRshubSmsPage()
+    /*public function displayRshubSmsPage()
     {
         include_once plugin_dir_path(__FILE__) . "../admin/rshub-admin-sms-page.php";
-    }
+    }*/
 
     // Otros métodos relacionados con SMS...
 }

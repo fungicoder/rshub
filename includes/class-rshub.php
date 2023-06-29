@@ -1,6 +1,9 @@
 <?php
 
 require_once(plugin_dir_path(__FILE__) . 'twilio-lib/twilio-php-main/src/Twilio/autoload.php');
+require_once(plugin_dir_path(__FILE__) . 'RshubSettings.php');
+require_once(plugin_dir_path(__FILE__) . 'RshubSearch.php');
+require_once(plugin_dir_path(__FILE__) . 'RshubSMS.php');
 
 use Twilio\Rest\Client;
 
@@ -17,9 +20,9 @@ class Rshub
 
     private string $RSHUB_VERSION;
 
-    private $settings;
-    private $sms;
-    private $search;
+    public $settings;
+    public $sms;
+    public $search;
 
     public function __construct()
     {
@@ -33,19 +36,20 @@ class Rshub
 
 
         // Create a new Classes instances
+
         $this->settings = new RshubSettings($this->pluginName);
         $this->sms = new RshubSMS($this->pluginName);
         $this->search = new RshubSearch($this->pluginName);
 
-        $this->load_dependencies();
+        //$this->load_dependencies();
         $this->define_admin_hooks();
         $this->define_public_hooks();
     }
 
-    private function load_dependencies(){
+    //private function load_dependencies(){
 
-        require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-plugin-name-loader.php';
-    }
+     //   require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-plugin-name-loader.php';
+    //}
 
     private function define_admin_hooks(){
 
@@ -83,6 +87,7 @@ class Rshub
 
         // Add setting menu item
         add_action('admin_menu', [$this->settings, 'rshub_settings_page']);
+
     }
 
 

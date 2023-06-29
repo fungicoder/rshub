@@ -167,5 +167,20 @@ class RshubSettings
         include_once plugin_dir_path(__FILE__) . "../admin/rshub-admin-settings-page.php";
     }
 
+    public function displayRshubSmsPage()
+    {
+        include_once plugin_dir_path(__FILE__) . "../admin/rshub-admin-sms-page.php";
+    }
+
+    public function displayRshubGoogleApiConfig()
+    {
+        include_once plugin_dir_path(__FILE__) . "../admin/rshub-admin-google-api-page.php";
+    }
+
+    public function displayRshubSearchResultsAdminPage()
+    {
+        include_once plugin_dir_path(__FILE__) . "../admin/rshub-admin-search-results-page.php";
+    }
+
 
 }
