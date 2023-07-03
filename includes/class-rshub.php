@@ -1,11 +1,11 @@
 <?php
 
-require_once(plugin_dir_path(__FILE__) . 'twilio-lib/twilio-php-main/src/Twilio/autoload.php');
+
 require_once(plugin_dir_path(__FILE__) . 'RshubSettings.php');
 require_once(plugin_dir_path(__FILE__) . 'RshubSearch.php');
 require_once(plugin_dir_path(__FILE__) . 'RshubSMS.php');
 
-use Twilio\Rest\Client;
+
 
 class Rshub
 {
@@ -69,15 +69,13 @@ class Rshub
     public function run()
     {
         // Saves and update settings
-        add_action("admin_init", [$this->settings, 'rshubTwilioSettingsSave']);
-
-        add_action("admin_init", [$this->search,'results_settings_df']);
+        add_action("admin_init", [$this->settings, 'rshubSettingsSave']);
 
         // calls sending function whenever we try sending messages.
         add_action('admin_init', [$this->sms, "send_message"]);
 
 
-        // Add shortcode
+        // Add shortcodes
         add_action('init', [$this, 'register_shortcodes']);
 
 
@@ -85,8 +83,11 @@ class Rshub
 
         add_action('admin_post_nopriv_rshub_search', [$this->search, 'rshub_handle_search']);
 
-        // Add setting menu item
+        // Add settings fields to main menu page
         add_action('admin_menu', [$this->settings, 'rshub_settings_page']);
+
+        add_action('admin_init', [$this->search, 'rshub_search_results_admin_page']);
+
 
     }
 
@@ -94,45 +95,12 @@ class Rshub
     /**
      *
      * This section refers to the search form and search results
-     *
      * Register the shortcode for the search form
      */
     public function register_shortcodes()
     {
         add_shortcode('rshub_search_form', [$this->search, 'rshub_search_form']);
-        add_shortcode('rshub_public_search_results', [$this->search, 'rshub_search_results_admin_page']);
     }
-
-
-
-
-
-    function displayRshubGoogleApiConfig()
-    {
-        include_once plugin_dir_path(__FILE__) . "../admin/rshub-admin-google-api-page.php";
-    }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 }
 
 

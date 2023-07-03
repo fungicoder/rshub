@@ -1,4 +1,6 @@
 <?php
+
+
 class RshubSearch
 {
     private $pluginName;
@@ -18,10 +20,19 @@ class RshubSearch
         ob_start();
         ?>
         <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post">
-            <input type="hidden" name="action" value="rshub-search">.
-            <input type="search" id="rshub-search-id" name="rshub-search" placeholder="Contractors...">
+            <input type="hidden" name="action" value="rshub_search">
+            <input type="hidden" id="rshub_geolocation" name="rshub_geolocation">
+            <input type="search" id="rshub_search_id" name="rshub_search" placeholder="Contractors...">
             <input type="submit" value="Search">
         </form>
+        <script>
+            // la geolocalización debe estar habilitada y luego establece el valor del campo oculto
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((position) => {
+                    document.getElementById('rshub_geolocation').value = `${position.coords.latitude},${position.coords.longitude}`;
+                });
+            }
+        </script>
         <?php
         return ob_get_clean();
     }
@@ -31,8 +42,10 @@ class RshubSearch
      */
     function rshub_handle_search()
     {
+
         // Captura la consulta de búsqueda
-        $search_query = sanitize_text_field($_POST['rshub-search-id']);
+        $search_query = sanitize_text_field($_POST['rshub_search_id']);
+        $geolocation = sanitize_text_field($_POST['rshub_geolocation']);
 
         // Realiza la solicitud a la API de Google Places y decodifica la respuesta
         $api_url = "https://maps.googleapis.com/maps/api/place/textsearch/json?query={$search_query}&key=AIzaSyAJMb51OqkPRd8WHDv7y4m5cN8c99cCItI";
@@ -41,7 +54,16 @@ class RshubSearch
         $data = json_decode($body, true);
 
         // Guarda los datos de la API en la base de datos de WordPress
-        update_option('rshub_last_search', $data);
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'rshub_searches';
+        $wpdb->insert(
+            $table_name,
+            array(
+                'search_term' => $search_query,
+                'results' => serialize($data),
+                'time' => current_time( 'mysql' ),
+            )
+        );
 
         // Redirige al usuario a una página de resultados de búsqueda
         wp_redirect(home_url("/public-search-results"));
@@ -54,7 +76,7 @@ class RshubSearch
     function rshub_search_results_admin_page()
     {
         // Obtiene los datos de la última búsqueda
-        $data = get_option('rshub_last_search');
+        $data = get_option('rshub_searches');
 
         // Si no hay datos, muestra un mensaje de error
         if (!$data) {
@@ -78,35 +100,7 @@ class RshubSearch
 
     }
 
-    public function rshubSearchResultsAdminSectionText()
-    {
-        echo '<p>Latest searches</p>';
-    }
 
-    public function results_settings_df()
-    {
-        register_setting(
-            $this->pluginName,
-            $this->pluginName
-        );
-        add_settings_section(
-            "rshub_search_results_section",
-            "Searches Admin View",
-            [$this, "rshubSearchResultsAdminSectionText"],
-            "rshub-serach-results-page"
-        );
-        add_settings_field(
-            "latest_searches",
-            "Latest Searches",
-            [$this, ""],
-            "rshub-serach-results-page"
-        );
-    }
-
-    function displayRshubSearchResultsAdminPage()
-    {
-        include_once plugin_dir_path(__FILE__) . "../admin/rshub-admin-search-results-page.php";
-    }
 
     // Otros métodos relacionados con la búsqueda...
 }

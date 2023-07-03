@@ -24,27 +24,14 @@ class RshubSettings
         add_submenu_page(
             "rshub-main",
             // parent slug
-            __("RooingSidingHub SMS PAGE", $this->pluginName . "-sms"),
+            __("RoofingSidingHub SMS PAGE", $this->pluginName . "-sms"),
             // page title
-            __("RooingSidingHub SMS", $this->pluginName . "-sms"),
+            __("RoofingSidingHub SMS", $this->pluginName . "-sms"),
             // menu title
             "manage_options", // capability
             $this->pluginName . "-sms",
             // menu_slug
             [$this, "displayRshubSmsPage"] // callable function
-        );
-
-        add_submenu_page(
-            "rshub-main",
-            // parent slug
-            __("RooingSidingHub Google Api", $this->pluginName . "-google"),
-            // page title
-            __("RooingSidingHub Google Api Config", $this->pluginName . "-google"),
-            // menu title
-            "manage_options", // capability
-            $this->pluginName . "-google",
-            // menu_slug
-            [$this, "displayRshubGoogleApiConfig"] // callable function
         );
 
         add_submenu_page(
@@ -66,16 +53,16 @@ class RshubSettings
      * This secction refers to the sms page
      * Registers and Defines the necessary fields we need.
      */
-    public function rshubTwilioSettingsSave()
+    public function rshubSettingsSave()
     {
 
         register_setting(
             $this->pluginName,
             $this->pluginName,
-            [$this, "rshubTwilioOptionsValidate"]
+            [$this, "rshubSettingsOptionsValidate"]
         );
         add_settings_section(
-            "rshub_main",
+            "rshub_main_twilio_section",
             "Main Settings",
             [$this, "rshubTwilioConfigSectionText"],
             "rshub-settings-page"
@@ -85,14 +72,29 @@ class RshubSettings
             "API SID",
             [$this, "rshubSettingTwilioSid"],
             "rshub-settings-page",
-            "rshub_main"
+            "rshub_main_twilio_section"
         );
         add_settings_field(
             "api_auth_token",
             "API AUTH TOKEN",
             [$this, "rshubSettingTwilioToken"],
             "rshub-settings-page",
-            "rshub_main"
+            "rshub_main_twilio_section"
+        );
+
+        add_settings_section(
+            "rshub_main_google_section",
+            "Google Api Settings",
+            [$this, "rshubGoogleConfigSectionText"],
+            "rshub-settings-page"
+        );
+
+        add_settings_field(
+            "google_places_api_key",
+            "Google Places Api Key",
+            [$this, "rshubSettingsGoogleApi"],
+            "rshub-settings-page",
+            "rshub_main_google_section"
         );
     }
 
@@ -100,10 +102,11 @@ class RshubSettings
      * Sanitises all input fields.
      *
      */
-    public function rshubTwilioOptionsValidate($input)
+    public function rshubSettingsOptionsValidate($input)
     {
-        $newinput["api_sid"] = trim($input["api_sid"]);
-        $newinput["api_auth_token"] = trim($input["api_auth_token"]);
+        $newinput["twilio_api_sid"] = trim($input["twilio_api_sid"]);
+        $newinput["twilio_api_auth_token"] = trim($input["twilio_api_auth_token"]);
+        $newinput["google_places_api_key"] = trim($input["google_places_api_key"]);
         return $newinput;
     }
 
@@ -121,18 +124,18 @@ class RshubSettings
     public function rshubSettingTwilioSid()
     {
         $options = get_option($this->pluginName);
-        if ($options === false || !isset($options['api_sid'])) {
-            $api_sid = '';
+        if ($options === false || !isset($options['twilio_api_sid'])) {
+            $twilio_api_sid = '';
         } else {
-            $api_sid = $options['api_sid'];
+            $twilio_api_sid = $options['twilio_api_sid'];
         }
         echo "
         <input
-            id='{$this->pluginName}[api_sid]'
-            name='{$this->pluginName}[api_sid]'
+            id='{$this->pluginName}[twilio_api_sid]'
+            name='{$this->pluginName}[twilio_api_sid]'
             size='40'
             type='text'
-            value='{$api_sid}'
+            value='{$twilio_api_sid}'
             placeholder='Enter your API SID here'
         />
             ";
@@ -145,19 +148,49 @@ class RshubSettings
     public function rshubSettingTwilioToken()
     {
         $options = get_option($this->pluginName);
-        if ($options === false || !isset($options['api_auth_token'])) {
-            $api_auth_token = '';
+        if ($options === false || !isset($options['twilio_api_auth_token'])) {
+            $twilio_api_auth_token = '';
         } else {
-            $api_auth_token = $options['api_auth_token'];
+            $twilio_api_auth_token = $options['twilio_api_auth_token'];
         }
         echo "
         <input
-            id='{$this->pluginName}[api_auth_token]'
-            name='{$this->pluginName}[api_auth_token]'
+            id='{$this->pluginName}[twilio_api_auth_token]'
+            name='{$this->pluginName}[twilio_api_auth_token]'
             size='40'
             type='text'
-            value='{$api_auth_token}'
+            value='{$twilio_api_auth_token}'
             placeholder='Enter your API AUTH TOKEN here'
+        />
+    ";
+    }
+
+    /**
+     * Displays the settings sub title header
+     */
+    public function rshubGoogleConfigSectionText()
+    {
+        echo '<h4 style="text-decoration: underline;">Edit Google Places Api details</h4>';
+    }
+
+    /**
+     * Registers and Defines the necessary fields we need.
+     */
+    public function rshubSettingsGoogleApi(){
+        $options = get_option($this->pluginName);
+        if ($options === false || !isset($options['google_places_api_key'])) {
+            $google_places_api_key = '';
+        } else {
+            $google_places_api_key = $options['google_places_api_key'];
+        }
+        echo "
+        <input
+            id='{$this->pluginName}[google_places_api_key]'
+            name='{$this->pluginName}[google_places_api_key]'
+            size='40'
+            type='text'
+            value='{$google_places_api_key}'
+            placeholder='Enter your Google Places API Key here'
         />
     ";
     }
@@ -170,11 +203,6 @@ class RshubSettings
     public function displayRshubSmsPage()
     {
         include_once plugin_dir_path(__FILE__) . "../admin/rshub-admin-sms-page.php";
-    }
-
-    public function displayRshubGoogleApiConfig()
-    {
-        include_once plugin_dir_path(__FILE__) . "../admin/rshub-admin-google-api-page.php";
     }
 
     public function displayRshubSearchResultsAdminPage()

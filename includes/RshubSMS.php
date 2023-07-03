@@ -1,5 +1,7 @@
 <?php
 
+require_once(plugin_dir_path(__FILE__) . 'twilio-lib/twilio-php-main/src/Twilio/autoload.php');
+use Twilio\Rest\Client;
 
 
 class RshubSMS
@@ -80,15 +82,6 @@ class RshubSMS
             self::adminNotice($message, true);
         });
     }
-
-
-    /**
-     * Display the settings for this plugin.
-     */
-    /*public function displayRshubSmsPage()
-    {
-        include_once plugin_dir_path(__FILE__) . "../admin/rshub-admin-sms-page.php";
-    }*/
 
     // Otros métodos relacionados con SMS...
 }
