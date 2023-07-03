@@ -52,7 +52,8 @@ class Rshub
     //}
 
     private function define_admin_hooks(){
-
+        // Add settings fields to main menu page
+        add_action('admin_menu', [$this->settings, 'rshub_settings_page']);
     }
 
     private function define_public_hooks(){
@@ -83,10 +84,7 @@ class Rshub
 
         add_action('admin_post_nopriv_rshub_search', [$this->search, 'rshub_handle_search']);
 
-        // Add settings fields to main menu page
-        add_action('admin_menu', [$this->settings, 'rshub_settings_page']);
 
-        add_action('admin_init', [$this->search, 'rshub_search_results_admin_page']);
 
 
     }

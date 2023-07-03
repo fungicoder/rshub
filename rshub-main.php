@@ -47,6 +47,7 @@ function rshub_install() {
         id mediumint(9) NOT NULL AUTO_INCREMENT,
         search_query text NOT NULL,
         search_results text NOT NULL,
+        search_geolocation text NOT NULL,
         search_time datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
         PRIMARY KEY  (id)
     ) $charset_collate;";
@@ -56,8 +57,6 @@ function rshub_install() {
 }
 
 register_activation_hook( __FILE__, 'rshub_install' );
-
-
 register_activation_hook( __FILE__, 'activate_rshub' );
 register_deactivation_hook( __FILE__, 'deactivate_rshub' );
 

@@ -11,7 +11,6 @@ class RshubSearch
     }
 
 
-
     /**
      * Renders the search form
      */
@@ -42,65 +41,57 @@ class RshubSearch
      */
     function rshub_handle_search()
     {
-
         // Captura la consulta de búsqueda
         $search_query = sanitize_text_field($_POST['rshub_search_id']);
         $geolocation = sanitize_text_field($_POST['rshub_geolocation']);
 
         // Realiza la solicitud a la API de Google Places y decodifica la respuesta
         $api_url = "https://maps.googleapis.com/maps/api/place/textsearch/json?query={$search_query}&key=AIzaSyAJMb51OqkPRd8WHDv7y4m5cN8c99cCItI";
+        // Realiza la solicitud a la API de Google Places
         $response = wp_remote_get($api_url);
-        $body = wp_remote_retrieve_body($response);
-        $data = json_decode($body, true);
+        if (is_wp_error($response)) {
+            // Maneja el error
+            $error_message = $response->get_error_message();
+            echo "Algo salió mal: $error_message";
+        } else {
+            // Decodifica la respuesta
+            $body = wp_remote_retrieve_body($response);
+            $data = json_decode($body, true);
 
-        // Guarda los datos de la API en la base de datos de WordPress
-        global $wpdb;
-        $table_name = $wpdb->prefix . 'rshub_searches';
-        $wpdb->insert(
-            $table_name,
-            array(
-                'search_term' => $search_query,
-                'results' => serialize($data),
-                'time' => current_time( 'mysql' ),
-            )
-        );
+            // Procesa los resultados
+            $processed_results = [];
+            foreach ($data['results'] as $result) {
+                $processed_results[] = [
+                    'name' => $result['name'],
+                    'formatted_address' => $result['formatted_address'],
+                    // Añade aquí cualquier otro campo que necesites
+                ];
+            }
+
+            // Guarda los datos de la API en la base de datos de WordPress
+            global $wpdb;
+            $table_name = $wpdb->prefix . 'rshub_searches';
+            $result = $wpdb->insert(
+                $table_name,
+                array(
+                    'id' => null,
+                    'search_query' => $search_query,
+                    'search_results' => serialize($processed_results),
+                    'search_geolocation' => $geolocation,
+                    'search_time' => current_time('mysql'),
+                )
+            );
+            if ($result === false) {
+                // Maneja el error
+                echo "No se pudo insertar los datos en la base de datos";
+                echo "Error de la base de datos: " . $wpdb->last_error;
+            }
+        }
 
         // Redirige al usuario a una página de resultados de búsqueda
         wp_redirect(home_url("/public-search-results"));
         exit;
     }
-
-    /**
-     * Muestra los resultados de la búsqueda
-     */
-    function rshub_search_results_admin_page()
-    {
-        // Obtiene los datos de la última búsqueda
-        $data = get_option('rshub_searches');
-
-        // Si no hay datos, muestra un mensaje de error
-        if (!$data) {
-            return "No hay resultados";
-        }
-
-        // Si hay datos, los muestra
-        ob_start();
-        ?>
-        <h1>Resultados de la búsqueda</h1>
-        <ul>
-            <?php foreach ($data['results'] as $result) : ?>
-                <li>
-                    <h2><?php echo $result['name']; ?></h2>
-                    <p><?php echo $result['formatted_address']; ?></p>
-                </li>
-            <?php endforeach; ?>
-        </ul>
-        <?php
-        return ob_get_clean();
-
-    }
-
-
 
     // Otros métodos relacionados con la búsqueda...
 }

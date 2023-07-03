@@ -1,11 +1,17 @@
 <?php
+
+require_once(plugin_dir_path(__FILE__) . 'RshubSearch.php');
+
+
 class RshubSettings
 {
     private $pluginName;
+    public $search;
 
     public function __construct($pluginName)
     {
         $this->pluginName = $pluginName;
+        $this->search = new RshubSearch($this->pluginName);
     }
 
     function rshub_settings_page()

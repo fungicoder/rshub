@@ -1,32 +1,34 @@
 <?php
-// solo los usuarios con los permisos adecuados puedan acceder a esta página
-if (!current_user_can('manage_options')) {
-    wp_die('No tienes suficientes permisos para acceder a esta página.');
-}
 
-// Obtener los resultados de búsqueda de donde están almacenandos.
 global $wpdb;
 $table_name = $wpdb->prefix . 'rshub_searches';
 $results = $wpdb->get_results("SELECT * FROM $table_name");
 
-// Muestra los resultados
-foreach ($results as $result) {
-    $data = json_decode($result->search_results, true);
+// Imprimir el último error de la base de datos
+if ($wpdb->last_error) {
+    echo "Error de la base de datos: " . $wpdb->last_error;
 }
 ?>
+
+<h2> <?php esc_attr_e( 'Latest Searches', 'WpAdminStyle' ); ?></h2>
 <div class="wrap">
     <h1>Resultados de la búsqueda</h1>
-
     <?php
-    // Obtén todas las opciones que comienzan con 'rshub_search_'
-    global $wpdb;
-    $results = $wpdb->get_results("SELECT table_name FROM $wpdb->options WHERE option_name LIKE 'rshub_search_%'", 'ARRAY_A');
-
-    // Itera sobre cada resultado de búsqueda y muéstralos
-    foreach ($results as $result_option_name) {
-        $result = get_option($result_option_name['option_name']);
-        echo $this->search->display_search_result($result);
-    }
-    ?>
-
+    if (!$results): ?>
+        <p>No hay resultados</p>
+    <?php else: ?>
+        <ul>
+            <?php foreach ($results as $result) :
+                $search_results = unserialize($result->search_results);
+                foreach ($search_results['results'] as $search_result) : ?>
+                    <li>
+                        <p>id: <?php echo $results-> id?> </p>
+                        <p>Consulta de búsqueda: <?php echo $result->search_query; ?></p>
+                        <p>Nombre del lugar: <?php echo $result->search_results ; ?></p>
+                        <p>Geolocalización: <?php echo $result->search_geolocation; ?></p>
+                        <p>Hora de la búsqueda: <?php echo $result->search_time; ?></p>
+                    </li>
+                <?php endforeach; endforeach; ?>
+        </ul>
+    <?php endif; ?>
 </div>
