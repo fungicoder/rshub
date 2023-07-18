@@ -53,6 +53,19 @@ class RshubSettings
             [$this, "displayRshubSearchResultsAdminPage"] // callable function
         );
 
+        add_submenu_page(
+            "rshub-main",
+            // parent slug
+            __("RooingSidingHub leads", $this->pluginName . "-leads"),
+            // page title
+            __("RooingSidingHub leads", $this->pluginName . "-search"),
+            // menu title
+            "manage_options", // capability
+            $this->pluginName . "-leads",
+            // menu_slug
+            [$this, "displayRshubLeadsAdminPage"] // callable function
+        );
+
     }
 
     /**
@@ -216,5 +229,8 @@ class RshubSettings
         include_once plugin_dir_path(__FILE__) . "../admin/rshub-admin-search-results-page.php";
     }
 
-
+    public function displayRshubLeadsAdminPage()
+    {
+        include_once plugin_dir_path(__FILE__) . "../admin/rshub-admin-leads-page.php";
+    }
 }

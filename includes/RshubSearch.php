@@ -20,8 +20,8 @@ class RshubSearch
         ?>
         <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post">
             <input type="hidden" name="action" value="rshub_search">
-            <input type="hidden" id="rshub_geolocation" name="rshub_geolocation">
-            <input type="search" id="rshub_search_id" name="rshub_search" placeholder="Contractors...">
+            <input type="hidden" id="rshub_user_geolocation" name="rshub_user_geolocation">
+            <input type="search" id="rshub_search_user_query" name="rshub_search_user_query" placeholder="Contractors...">
             <input type="submit" value="Search">
         </form>
         <script>
@@ -42,8 +42,8 @@ class RshubSearch
     function rshub_handle_search()
     {
         // Captura la consulta de búsqueda
-        $search_query = sanitize_text_field($_POST['rshub_search_id']);
-        $geolocation = sanitize_text_field($_POST['rshub_geolocation']);
+        $search_query = sanitize_text_field($_POST['rshub_search_user_query']);
+        $geolocation = sanitize_text_field($_POST['rshub_user_geolocation']);
 
         // Realiza la solicitud a la API de Google Places y decodifica la respuesta
         $api_url = "https://maps.googleapis.com/maps/api/place/textsearch/json?query={$search_query}&key=AIzaSyAJMb51OqkPRd8WHDv7y4m5cN8c99cCItI";
@@ -89,7 +89,7 @@ class RshubSearch
         }
 
         // Redirige al usuario a una página de resultados de búsqueda
-        wp_redirect(home_url("/public-search-results"));
+        wp_redirect(home_url("/public-search-results/"));
         exit;
     }
 
